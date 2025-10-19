@@ -78,7 +78,7 @@ export default function BypassPage() {
 
     while (attempts < maxAttempts) {
       try {
-        const response = await fetch(`http://api.meobypass.click/taskid/${taskId}`)
+        const response = await fetch(`https://api.meobypass.click/taskid/${taskId}`)
         const data = await response.json()
 
         if (data.status === "success") {
@@ -119,7 +119,7 @@ export default function BypassPage() {
     try {
       const recaptchaToken = await getRecaptchaToken()
 
-      const bypassUrl = `http://api.meobypass.click/public/bypass?url=${encodeURIComponent(url)}&recaptcha=${recaptchaToken}`
+      const bypassUrl = `https://api.meobypass.click/public/bypass?url=${encodeURIComponent(url)}&recaptcha=${recaptchaToken}`
 
       const response = await fetch(bypassUrl)
 
