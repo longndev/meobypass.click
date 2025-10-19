@@ -115,17 +115,7 @@ export default function BypassPage() {
     setError(false)
 
     try {
-      let recaptchaToken = ""
-      let attempts = 0
-      const maxAttempts = 10
-      
-      while (!recaptchaToken && attempts < maxAttempts) {
-        recaptchaToken = await getRecaptchaToken()
-        if (!recaptchaToken) {
-          await new Promise(resolve => setTimeout(resolve, 500))
-          attempts++
-        }
-      }
+      const recaptchaToken = await getRecaptchaToken()
       
       if (!recaptchaToken) {
         setError(true)
