@@ -20,8 +20,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: "https://raw.githubusercontent.com/longndev/Meo-Bypass/refs/heads/main/meobypass_banner.jpg",
-        width: 1200,
-        height: 630,
+        width: 736,
+        height: 736,
         alt: "Mèo Bypass Banner",
       },
     ],
