@@ -71,7 +71,7 @@ export default function BypassPage() {
     }
   }
   const pollTaskStatus = async (taskId, recaptchaToken) => {
-    const maxAttempts = 60
+    const maxAttempts = 60000
     let attempts = 0
 
     while (attempts < maxAttempts) {
