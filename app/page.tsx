@@ -59,15 +59,9 @@ export default function BypassPage() {
       }
     }
   }, [])
-const getRecaptchaToken = async () => {
+  const getRecaptchaToken = async () => {
     try {
       if (window.grecaptcha && window.grecaptcha.execute) {
-        try {
-          await window.grecaptcha.reset()
-        } catch (e) {
-        }
-        await new Promise(resolve => setTimeout(resolve, 4000))
-        
         const token = await window.grecaptcha.execute('6LeEge4rAAAAAPJ7vKCvI9-DcHBNh7B_92UcK2y6', { action: 'bypass' })
         return token || ""
       }
