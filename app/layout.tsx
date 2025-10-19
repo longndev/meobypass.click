@@ -6,16 +6,37 @@ import "./globals.css"
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
-
 export const metadata: Metadata = {
   title: "Mèo Bypass",
-  description: "A fast and reliable way to bypass Vietnamese shortlinks.",
-  icons: {
-    icon: "https://github.com/longndev/Meo-Bypass/blob/main/meobypass.avif?raw=true",
-    apple: "https://github.com/longndev/Meo-Bypass/blob/main/meobypass.avif?raw=true",
+  description:
+    "A fast and reliable way to bypass Vietnamese shortlinks.",
+  keywords: ["bypass links", "linkvertise", "adfly", "shortlinks", "bypass link4m", "bypass link2m", "bypass delta", "vietnam"],
+  openGraph: {
+    title: "Mèo Bypass",
+    description:
+      "A fast and reliable way to bypass Vietnamese shortlinks.",
+    url: "https://meobypass.click/",
+    siteName: "Mèo Bypass",
+    images: [
+      {
+        url: "https://raw.githubusercontent.com/longndev/Meo-Bypass/refs/heads/main/meobypass_banner.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Mèo Bypass Banner",
+      },
+    ],
+    locale: "vi_VN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@twitter_handle",
+    title: "Mèo Bypass",
+    description:
+      "A fast and reliable way to bypass Vietnamese shortlinks.",
+    images: ["https://raw.githubusercontent.com/longndev/Meo-Bypass/refs/heads/main/meobypass_banner.jpg"],
   },
 };
-
 export default function RootLayout({
   children,
 }: Readonly<{
