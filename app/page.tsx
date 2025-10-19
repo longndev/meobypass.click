@@ -155,6 +155,20 @@ export default function BypassPage() {
     setShowResult(false)
     setResult("")
     setUrl("")
+    if (window.grecaptcha) {
+      try {
+        window.grecaptcha.reset()
+      } catch (e) {
+        setIsRecaptchaReady(false)
+        setTimeout(() => {
+          if (window.grecaptcha && window.grecaptcha.ready) {
+            window.grecaptcha.ready(() => {
+              setIsRecaptchaReady(true)
+            })
+          }
+        }, 100)
+      }
+    }
   }
 
   const handleCopy = () => {
