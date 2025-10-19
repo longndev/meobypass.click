@@ -121,7 +121,26 @@ const getRecaptchaToken = async () => {
     setError(false)
 
     try {
-      const recaptchaToken = await getRecaptchaToken()
+      let recaptchaToken = ""
+      let attempts = 0
+      const maxAttempts = 10
+      
+      while (!recaptchaToken && attempts < maxAttempts) {
+        recaptchaToken = await getRecaptchaToken()
+        if (!recaptchaToken) {
+          await new Promise(resolve => setTimeout(resolve, 500))
+          attempts++
+        }
+      }
+      
+      if (!recaptchaToken) {
+        setError(true)
+        setLoading(false)
+        setTimeout(() => {
+          setError(false)
+        }, 2000)
+        return
+      }
 
       const bypassUrl = `https://api.meobypass.click/public/bypass?url=${encodeURIComponent(url)}&recaptcha=${recaptchaToken}`
 
