@@ -159,9 +159,7 @@ export default function BypassPage() {
   }
 
   const handleBack = () => {
-    setShowResult(false)
-    setResult("")
-    setUrl("")
+    window.location.reload()
   }
 
 
