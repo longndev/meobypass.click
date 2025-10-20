@@ -8,20 +8,30 @@ const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "Mèo Bypass",
-  description:
-    "A fast and reliable way to bypass Vietnamese shortlinks.",
-  keywords: ["bypass links", "linkvertise", "adfly", "shortlinks", "bypass link4m", "bypass link2m", "bypass delta", "vietnam"],
+  description: "A fast and reliable way to bypass Vietnamese shortlinks.",
+  keywords: [
+    "bypass links",
+    "linkvertise",
+    "adfly",
+    "shortlinks",
+    "bypass link4m",
+    "bypass link2m",
+    "bypass delta",
+    "vietnam",
+  ],
+  alternates: {
+    canonical: "https://meobypass.click/",
+  },
   openGraph: {
     title: "Mèo Bypass",
-    description:
-      "A fast and reliable way to bypass Vietnamese shortlinks.",
+    description: "A fast and reliable way to bypass Vietnamese shortlinks.",
     url: "https://meobypass.click/",
     siteName: "Mèo Bypass",
     images: [
       {
         url: "https://raw.githubusercontent.com/longndev/Meo-Bypass/refs/heads/main/meobypass_banner.jpg",
-        width: 736,
-        height: 736,
+        width: 1200,
+        height: 630,
         alt: "Mèo Bypass Banner",
       },
     ],
@@ -32,10 +42,15 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@twitter_handle",
     title: "Mèo Bypass",
-    description:
-      "A fast and reliable way to bypass Vietnamese shortlinks.",
-    images: ["https://raw.githubusercontent.com/longndev/Meo-Bypass/refs/heads/main/meobypass_banner.jpg"],
+    description: "A fast and reliable way to bypass Vietnamese shortlinks.",
+    images: [
+      "https://raw.githubusercontent.com/longndev/Meo-Bypass/refs/heads/main/meobypass_banner.jpg",
+    ],
   },
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#76CF8D" },
+    { media: "(prefers-color-scheme: dark)", color: "#76CF8D" },
+  ],
 };
 export default function RootLayout({
   children,
