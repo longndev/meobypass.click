@@ -9,6 +9,15 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "Mèo Bypass",
   description: "A fast and reliable way to bypass Vietnamese shortlinks.",
+  icons: {
+    icon: [
+      "https://raw.githubusercontent.com/longndev/Meo-Bypass/refs/heads/main/meobypass.avif",
+      { url: "https://raw.githubusercontent.com/longndev/Meo-Bypass/refs/heads/main/meobypass.avif", sizes: "16x16", type: "image/png" },
+      { url: "https://raw.githubusercontent.com/longndev/Meo-Bypass/refs/heads/main/meobypass.avif", sizes: "32x32", type: "image/png" }
+    ],
+    apple: "https://raw.githubusercontent.com/longndev/Meo-Bypass/refs/heads/main/meobypass.avif",
+    shortcut: "https://raw.githubusercontent.com/longndev/Meo-Bypass/refs/heads/main/meobypass.avif",
+  },
   keywords: [
     "bypass links",
     "linkvertise",
