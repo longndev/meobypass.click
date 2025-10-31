@@ -379,7 +379,7 @@ export default function BypassPage() {
 
         <div className="pt-10 flex items-center justify-center gap-4 text-sm text-gray-400">
           <a
-            href="https://discord.gg/twuwFhzZhH"
+            href="https://meobypass.click/discord"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 transition-all duration-200"
@@ -396,7 +396,7 @@ export default function BypassPage() {
             Support ↗
           </a>
           <a
-            href="https://discord.gg/twuwFhzZhH"
+            href="https://meobypass.click/discord"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 transition-all duration-200"
