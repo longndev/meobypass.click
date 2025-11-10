@@ -10,6 +10,11 @@
       "permanent": true
     },
     {
+      "source": "/stats",
+      "destination": "https://status.herin38.dev/public-dashboards/683a98dd863847bea5ad9124b75fa890",
+      "permanent": true
+    },
+    {
       "source": "/discord",
       "destination": "https://discord.com/invite/twuwFhzZhH",
       "permanent": true
