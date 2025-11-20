@@ -21,7 +21,7 @@ export default function BotPage() {
   }, [])
 
   const handleAddBot = () => {
-    window.location.href = "https://meobypass.click/bot/"
+    window.location.href = "https://discord.com/oauth2/authorize?client_id=1385210566020300941&permissions=8&integration_type=0&scope=bot"
   }
 
   if (isPageLoading) {
