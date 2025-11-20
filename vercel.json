@@ -5,11 +5,6 @@
   "outputDirectory": ".next",
   "redirects": [
     {
-      "source": "/bot",
-      "destination": "https://discord.com/oauth2/authorize?client_id=1385210566020300941&permissions=8&integration_type=0&scope=bot",
-      "permanent": true
-    },
-    {
       "source": "/stats",
       "destination": "https://status.herin38.dev/public-dashboards/683a98dd863847bea5ad9124b75fa890",
       "permanent": true
