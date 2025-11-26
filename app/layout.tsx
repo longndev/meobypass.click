@@ -11,12 +11,12 @@ export const metadata: Metadata = {
   description: "A fast and reliable way to bypass Vietnamese shortlinks.",
   icons: {
     icon: [
-      "https://raw.githubusercontent.com/longndev/Meo-Bypass/refs/heads/main/meobypass.avif",
-      { url: "https://raw.githubusercontent.com/longndev/Meo-Bypass/refs/heads/main/meobypass.avif", sizes: "16x16", type: "image/png" },
-      { url: "https://raw.githubusercontent.com/longndev/Meo-Bypass/refs/heads/main/meobypass.avif", sizes: "32x32", type: "image/png" }
+      "https://raw.githubusercontent.com/longndev/Meo-Bypass/refs/heads/main/meobypass_logo.png",
+      { url: "https://raw.githubusercontent.com/longndev/Meo-Bypass/refs/heads/main/meobypass_logo.png", sizes: "16x16", type: "image/png" },
+      { url: "https://raw.githubusercontent.com/longndev/Meo-Bypass/refs/heads/main/meobypass_logo.png", sizes: "32x32", type: "image/png" }
     ],
-    apple: "https://raw.githubusercontent.com/longndev/Meo-Bypass/refs/heads/main/meobypass.avif",
-    shortcut: "https://raw.githubusercontent.com/longndev/Meo-Bypass/refs/heads/main/meobypass.avif",
+    apple: "https://raw.githubusercontent.com/longndev/Meo-Bypass/refs/heads/main/meobypass_logo.png",
+    shortcut: "https://raw.githubusercontent.com/longndev/Meo-Bypass/refs/heads/main/meobypass_logo.png",
   },
   keywords: [
     "bypass links",
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
     title: "Mèo Bypass",
     description: "A fast and reliable way to bypass Vietnamese shortlinks.",
     images: [
-      "https://raw.githubusercontent.com/longndev/Meo-Bypass/refs/heads/main/meobypass_banner.jpg",
+      "https://raw.githubusercontent.com/longndev/Meo-Bypass/refs/heads/main/meobypass_banner.png",
     ],
   },
   themeColor: [
