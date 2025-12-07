@@ -199,6 +199,14 @@ export default function BypassPage() {
           font-style: normal;
         }
         
+        .title-glow {
+          text-shadow: 
+            0 0 20px rgba(34, 197, 94, 0.5),
+            0 0 40px rgba(34, 197, 94, 0.3),
+            0 0 60px rgba(34, 197, 94, 0.2),
+            0 0 80px rgba(34, 197, 94, 0.1);
+        }
+        
         .grid-background {
           background-image: 
             linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
@@ -222,7 +230,7 @@ export default function BypassPage() {
 
       <main className="max-w-4xl w-full text-center space-y-10 relative z-10">
         <div className="space-y-8 pt-8">
-          <h1 className="title-font text-7xl md:text-8xl tracking-tight text-green-500">
+          <h1 className="title-font title-glow text-7xl md:text-8xl tracking-tight text-green-500">
             Mèo Bypass
           </h1>
 
