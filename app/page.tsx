@@ -192,9 +192,11 @@ export default function BypassPage() {
           -moz-osx-font-smoothing: grayscale;
         }
         
-        .gradient-bg {
-          background: radial-gradient(circle at 20% 50%, rgba(34, 197, 94, 0.1) 0%, transparent 50%),
-                      radial-gradient(circle at 80% 80%, rgba(34, 197, 94, 0.08) 0%, transparent 50%);
+        .grid-background {
+          background-image: 
+            linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+          background-size: 40px 40px;
         }
         
         @keyframes float {
@@ -207,7 +209,7 @@ export default function BypassPage() {
         }
       `}</style>
 
-      <div className="absolute inset-0 gradient-bg"></div>
+      <div className="absolute inset-0 grid-background"></div>
       <div className="absolute top-20 left-20 w-64 h-64 bg-green-600/10 rounded-full blur-3xl float-animation"></div>
       <div className="absolute bottom-20 right-20 w-80 h-80 bg-green-500/10 rounded-full blur-3xl float-animation" style={{ animationDelay: '-3s' }}></div>
 
