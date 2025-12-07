@@ -185,11 +185,18 @@ export default function BypassPage() {
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center px-4 relative overflow-hidden">
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
         
         body {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
           -webkit-font-smoothing: antialiased;
           -moz-osx-font-smoothing: grayscale;
+        }
+        
+        .title-font {
+          font-family: "Pacifico", cursive;
+          font-weight: 400;
+          font-style: normal;
         }
         
         .grid-background {
@@ -215,7 +222,7 @@ export default function BypassPage() {
 
       <main className="max-w-4xl w-full text-center space-y-10 relative z-10">
         <div className="space-y-8 pt-8">
-          <h1 className="text-7xl md:text-8xl font-bold tracking-tight text-green-500">
+          <h1 className="title-font text-7xl md:text-8xl tracking-tight text-green-500">
             Mèo Bypass
           </h1>
 
