@@ -309,7 +309,9 @@ export default function BypassPage() {
             <div className="space-y-4">
               <div className="flex gap-3">
                 <div className="flex-1 px-5 py-4 bg-zinc-900 border border-zinc-800 rounded-md flex items-center" style={{ height: "56px" }}>
-                  <p className="text-left truncate text-gray-300">{result}</p>
+                  <p className="text-left truncate text-gray-300">
+                    {result.length > 60 ? `${result.substring(0, 60)}...` : result}
+                  </p>
                 </div>
                 <button
                   onClick={handleCopy}
@@ -320,6 +322,12 @@ export default function BypassPage() {
                   {copied ? <Check className="w-5 h-5 text-green-400" /> : <Copy className="w-5 h-5" />}
                 </button>
               </div>
+
+              {result.length > 60 && (
+                <p className="text-sm text-gray-500 text-center">
+                  Full URL is truncated. Click the copy button to copy the complete link.
+                </p>
+              )}
 
               <button
                 onClick={handleBack}
