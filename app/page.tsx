@@ -315,7 +315,7 @@ export default function BypassPage() {
                 </div>
                 <button
                   onClick={handleCopy}
-                  className="px-5 py-4 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 rounded-md transition-all"
+                  className="px-5 py-4 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 rounded-md transition-all flex items-center justify-center"
                   style={{ height: "56px", width: "56px" }}
                   title="Copy to clipboard"
                 >
