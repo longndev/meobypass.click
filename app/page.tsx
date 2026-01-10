@@ -26,7 +26,7 @@ export default function BypassPage() {
   const [newMusicUrl, setNewMusicUrl] = useState("");
   const [customPlaylist, setCustomPlaylist] = useState([
     { name: "Phép Màu (Low G)", url: "https://files.catbox.moe/pz50nd.mp3" },
-    { name: "LOI CHOI (Wren Evans)", url: "https://files.catbox.moe/ev5pjz.mp3" },
+    { name: "Ngựa ô", url: "https://files.catbox.moe/ev5pjz.mp3" },
     { name: "Love Game (Low G)", url: "https://files.catbox.moe/we2egh.mp3" }
   ]);
   const audioRef = useRef(null);
