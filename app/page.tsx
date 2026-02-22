@@ -96,46 +96,54 @@ export default function BypassPage() {
 
   useEffect(() => {
     window.onRecaptchaLoad = () => {
-      const checkRecaptcha = () => {
-        if (window.grecaptcha && window.grecaptcha.render) {
-          if (!isRecaptchaRendered.current) {
-            try {
-              recaptchaWidgetId.current = window.grecaptcha.render('recaptcha-container', {
-                'sitekey': '6LeEge4rAAAAAPJ7vKCvI9-DcHBNh7B_92UcK2y6',
-                'size': 'invisible',
-                'callback': (token) => {
-                  if (recaptchaResolve.current) {
-                    recaptchaResolve.current(token);
-                  }
-                  setTimeout(() => {
-                    if (window.grecaptcha && recaptchaWidgetId.current !== null) {
-                      window.grecaptcha.reset(recaptchaWidgetId.current);
-                    }
-                  }, 1500);
-                },
-                'error-callback': () => {
-                  if (recaptchaResolve.current) {
-                    recaptchaResolve.current("");
-                  }
-                  setTimeout(() => {
-                    if (window.grecaptcha && recaptchaWidgetId.current !== null) {
-                      window.grecaptcha.reset(recaptchaWidgetId.current);
-                    }
-                  }, 1500);
+      const tryRender = () => {
+        if (window.grecaptcha?.render && !isRecaptchaRendered.current) {
+          try {
+            recaptchaWidgetId.current = window.grecaptcha.render('recaptcha-container', {
+              sitekey: '6LeEge4rAAAAAPJ7vKCvI9-DcHBNh7B_92UcK2y6',
+              size: 'invisible',
+              badge: 'bottomright',
+              callback: (token) => {
+                if (recaptchaResolve.current) {
+                  recaptchaResolve.current(token);
+                  recaptchaResolve.current = null;
                 }
-              });
-              isRecaptchaRendered.current = true;
-              setIsRecaptchaReady(true);
-            } catch (e) {
-              console.error("reCAPTCHA render error:", e);
-            }
+                setTimeout(() => {
+                  if (window.grecaptcha && recaptchaWidgetId.current !== null) {
+                    window.grecaptcha.reset(recaptchaWidgetId.current);
+                  }
+                }, 1000);
+              },
+              'error-callback': () => {
+                if (recaptchaResolve.current) {
+                  recaptchaResolve.current("");
+                  recaptchaResolve.current = null;
+                }
+                setTimeout(() => {
+                  if (window.grecaptcha && recaptchaWidgetId.current !== null) {
+                    window.grecaptcha.reset(recaptchaWidgetId.current);
+                  }
+                }, 1000);
+              },
+              'expired-callback': () => {
+                if (recaptchaResolve.current) {
+                  recaptchaResolve.current("");
+                  recaptchaResolve.current = null;
+                }
+              }
+            });
+            isRecaptchaRendered.current = true;
+            setIsRecaptchaReady(true);
+          } catch (err) {
+            setIsRecaptchaReady(false);
           }
         } else {
-          setTimeout(checkRecaptcha, 100);
+          setTimeout(tryRender, 150);
         }
       };
-      checkRecaptcha();
+      tryRender();
     };
+
     const scriptId = 'recaptcha-script';
     if (!document.getElementById(scriptId)) {
       const script = document.createElement('script');
@@ -144,9 +152,10 @@ export default function BypassPage() {
       script.async = true;
       script.defer = true;
       document.head.appendChild(script);
-    } else if (window.grecaptcha && window.grecaptcha.render && !isRecaptchaRendered.current) {
-      window.onRecaptchaLoad();
+    } else if (window.grecaptcha?.render && !isRecaptchaRendered.current) {
+      window.onRecaptchaLoad?.();
     }
+
     return () => {
       delete window.onRecaptchaLoad;
     };
@@ -160,11 +169,16 @@ export default function BypassPage() {
       }
       recaptchaResolve.current = resolve;
       try {
-        window.grecaptcha.execute(recaptchaWidgetId.current);
+        window.grecaptcha.execute(recaptchaWidgetId.current, {});
       } catch (e) {
-        console.error("Execute error:", e);
         resolve("");
       }
+      setTimeout(() => {
+        if (recaptchaResolve.current) {
+          recaptchaResolve.current("");
+          recaptchaResolve.current = null;
+        }
+      }, 15000);
     });
   };
 
@@ -215,15 +229,21 @@ export default function BypassPage() {
   };
 
   const handleBypass = async () => {
-    if (!url || !isRecaptchaReady) return;
+    if (!url.trim() || !isRecaptchaReady) {
+      if (!url.trim()) addToast("Vui lòng nhập link", 'error');
+      if (!isRecaptchaReady) addToast("Đang chờ kiểm tra bảo mật...", 'error');
+      return;
+    }
     setLoading(true);
     setError(false);
+    setShowResult(false);
     try {
       const recaptchaToken = await getRecaptchaToken();
       if (!recaptchaToken) {
         setError(true);
+        setResult("Xác thực thất bại (reCAPTCHA không trả token). Thử lại hoặc refresh trang.");
+        addToast("Lỗi reCAPTCHA", 'error');
         setLoading(false);
-        setTimeout(() => setError(false), 2000);
         return;
       }
       const bypassUrl = `https://api.meobypass.click/public/bypass?url=${encodeURIComponent(url)}&captcha=${recaptchaToken}`;
@@ -234,19 +254,19 @@ export default function BypassPage() {
           await pollTaskStatus(data.task_id);
         } else {
           setError(true);
-          setResult("Invalid response from server.");
+          setResult("Phản hồi server không hợp lệ.");
           setShowResult(true);
           setLoading(false);
         }
       } else {
         setError(true);
-        setResult("Server error. Please try again later.");
+        setResult("Lỗi server. Vui lòng thử lại sau.");
         setShowResult(true);
         setLoading(false);
       }
     } catch {
       setError(true);
-      setResult("Network error. Please check your connection.");
+      setResult("Lỗi kết nối hoặc reCAPTCHA. Kiểm tra mạng và thử lại.");
       setShowResult(true);
       setLoading(false);
     }
@@ -341,70 +361,70 @@ export default function BypassPage() {
     <div className="min-h-screen bg-black text-white p-4 md:p-6 relative overflow-hidden">
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
-       
+      
         body {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
           background: #050505;
         }
-       
+      
         .title-glow {
           text-shadow:
             0 0 30px rgba(34, 197, 94, 0.6),
             0 0 60px rgba(34, 197, 94, 0.4),
             0 0 90px rgba(34, 197, 94, 0.3);
         }
-       
+      
         .mono {
           font-family: 'JetBrains Mono', monospace;
         }
-       
+      
         @keyframes rotate {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
-       
+      
         .disk {
           animation: rotate 5s linear infinite;
           animation-play-state: paused;
         }
-       
+      
         .disk.playing {
           animation-play-state: running;
         }
-       
+      
         .grid-background {
           background-image:
             linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
             linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
           background-size: 40px 40px;
         }
-       
+      
         @keyframes shimmer {
           0% { transform: translateX(-100%); }
           100% { transform: translateX(100%); }
         }
-       
+      
         .animate-shimmer {
           animation: shimmer 2s infinite;
         }
-       
+      
         .scrollbar-thin::-webkit-scrollbar {
           width: 4px;
         }
-       
+      
         .scrollbar-thin::-webkit-scrollbar-track {
           background: transparent;
         }
-       
+      
         .scrollbar-thin::-webkit-scrollbar-thumb {
           background: #22c55e;
           border-radius: 10px;
         }
-       
+      
         .scrollbar-thin::-webkit-scrollbar-thumb:hover {
           background: #16a34a;
         }
-       
+      
         @keyframes confetti-fall {
           0% {
             transform: translateY(-100vh) rotate(0deg);
@@ -415,7 +435,7 @@ export default function BypassPage() {
             opacity: 0;
           }
         }
-       
+      
         .confetti {
           position: fixed;
           width: 10px;
@@ -424,12 +444,12 @@ export default function BypassPage() {
           pointer-events: none;
           animation: confetti-fall 3s linear forwards;
         }
-       
+      
         @keyframes blink {
           0%, 100% { opacity: 1; }
           50% { opacity: 0; }
         }
-       
+      
         @keyframes slide-in-right {
           from {
             transform: translateX(400px);
@@ -440,7 +460,7 @@ export default function BypassPage() {
             opacity: 1;
           }
         }
-       
+      
         @keyframes slide-out-right {
           from {
             transform: translateX(0);
@@ -451,15 +471,15 @@ export default function BypassPage() {
             opacity: 0;
           }
         }
-       
+      
         .achievement-enter {
           animation: slide-in-right 0.5s ease-out forwards;
         }
-       
+      
         .achievement-exit {
           animation: slide-out-right 0.5s ease-in forwards;
         }
-       
+      
         @keyframes toast-slide-in {
           from {
             transform: translateX(400px);
@@ -470,7 +490,7 @@ export default function BypassPage() {
             opacity: 1;
           }
         }
-       
+      
         .toast-enter {
           animation: toast-slide-in 0.3s ease-out forwards;
         }
@@ -736,7 +756,7 @@ export default function BypassPage() {
             />
             <button
               onClick={handleBypass}
-              disabled={!url || loading}
+              disabled={!url.trim() || loading || !isRecaptchaReady}
               className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-400 hover:to-green-500 text-black py-3 rounded-xl font-black text-[11px] uppercase active:scale-95 transition-all mt-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:from-green-500 disabled:to-green-600 shadow-lg shadow-green-500/20"
             >
               {loading ? (
