@@ -1,5 +1,4 @@
 "use client"
-
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageCircle, PlusCircle, Code, ShieldCheck, SkipForward, ListMusic, Play, Pause } from 'lucide-react';
 
@@ -24,7 +23,9 @@ export default function BypassPage() {
   const [successStreak, setSuccessStreak] = useState(0);
   const [showAchievement, setShowAchievement] = useState(false);
   const [toasts, setToasts] = useState([]);
-
+  const recaptchaWidgetId = useRef(null);
+  const recaptchaResolve = useRef(null);
+  const isRecaptchaRendered = useRef(false);
   const fullText = "Paste your link here...";
 
   const addToast = (message, type = 'info') => {
@@ -34,6 +35,7 @@ export default function BypassPage() {
       setToasts(prev => prev.filter(t => t.id !== id));
     }, 4000);
   };
+
   const [currentSongIndex, setCurrentSongIndex] = useState(0);
   const [showPlaylist, setShowPlaylist] = useState(false);
   const [showAddMusic, setShowAddMusic] = useState(false);
@@ -45,7 +47,6 @@ export default function BypassPage() {
     { name: "3", url: "https://files.catbox.moe/we2egh.mp3" }
   ]);
   const audioRef = useRef(null);
-
   const playlist = customPlaylist;
 
   useEffect(() => {
@@ -54,7 +55,6 @@ export default function BypassPage() {
     };
     updateClock();
     const clockInterval = setInterval(updateClock, 1000);
-
     const updatePing = async () => {
       const start = performance.now();
       try {
@@ -66,14 +66,12 @@ export default function BypassPage() {
     };
     updatePing();
     const pingInterval = setInterval(updatePing, 2000);
-
     return () => {
       clearInterval(clockInterval);
       clearInterval(pingInterval);
     };
   }, []);
 
-  // Typing animation for placeholder
   useEffect(() => {
     if (!url && isTyping) {
       let index = 0;
@@ -92,51 +90,79 @@ export default function BypassPage() {
           }, 3000);
         }
       }, 100);
-
       return () => clearInterval(typingInterval);
     }
   }, [isTyping, url, fullText]);
 
   useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://www.google.com/recaptcha/api.js';
-    script.async = true;
-    script.defer = true;
-    
-    script.onload = () => {
-      // Wait for grecaptcha to be available
+    window.onRecaptchaLoad = () => {
       const checkRecaptcha = () => {
-        if (window.grecaptcha && typeof window.grecaptcha.execute === 'function') {
-          setIsRecaptchaReady(true);
+        if (window.grecaptcha && window.grecaptcha.render) {
+          if (!isRecaptchaRendered.current) {
+            try {
+              recaptchaWidgetId.current = window.grecaptcha.render('recaptcha-container', {
+                'sitekey': '6LeEge4rAAAAAPJ7vKCvI9-DcHBNh7B_92UcK2y6',
+                'size': 'invisible',
+                'callback': (token) => {
+                  if (recaptchaResolve.current) {
+                    recaptchaResolve.current(token);
+                  }
+                  setTimeout(() => {
+                    if (window.grecaptcha && recaptchaWidgetId.current !== null) {
+                      window.grecaptcha.reset(recaptchaWidgetId.current);
+                    }
+                  }, 1500);
+                },
+                'error-callback': () => {
+                  if (recaptchaResolve.current) {
+                    recaptchaResolve.current("");
+                  }
+                  setTimeout(() => {
+                    if (window.grecaptcha && recaptchaWidgetId.current !== null) {
+                      window.grecaptcha.reset(recaptchaWidgetId.current);
+                    }
+                  }, 1500);
+                }
+              });
+              isRecaptchaRendered.current = true;
+              setIsRecaptchaReady(true);
+            } catch (e) {
+              console.error("reCAPTCHA render error:", e);
+            }
+          }
         } else {
           setTimeout(checkRecaptcha, 100);
         }
       };
       checkRecaptcha();
     };
-
-    document.head.appendChild(script);
-
+    const scriptId = 'recaptcha-script';
+    if (!document.getElementById(scriptId)) {
+      const script = document.createElement('script');
+      script.id = scriptId;
+      script.src = 'https://www.google.com/recaptcha/api.js?onload=onRecaptchaLoad&render=explicit';
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    } else if (window.grecaptcha && window.grecaptcha.render && !isRecaptchaRendered.current) {
+      window.onRecaptchaLoad();
+    }
     return () => {
-      if (document.head.contains(script)) {
-        document.head.removeChild(script);
-      }
+      delete window.onRecaptchaLoad;
     };
   }, []);
 
-  const getRecaptchaToken = async () => {
+  const getRecaptchaToken = () => {
     return new Promise((resolve) => {
-      if (window.grecaptcha && typeof window.grecaptcha.execute === 'function') {
-        try {
-          window.grecaptcha.execute('6LeEge4rAAAAAPJ7vKCvI9-DcHBNh7B_92UcK2y6', { action: 'bypass' }).then((token) => {
-            resolve(token || "");
-          }).catch(() => {
-            resolve("");
-          });
-        } catch {
-          resolve("");
-        }
-      } else {
+      if (!isRecaptchaReady || recaptchaWidgetId.current === null) {
+        resolve("");
+        return;
+      }
+      recaptchaResolve.current = resolve;
+      try {
+        window.grecaptcha.execute(recaptchaWidgetId.current);
+      } catch (e) {
+        console.error("Execute error:", e);
         resolve("");
       }
     });
@@ -145,22 +171,16 @@ export default function BypassPage() {
   const pollTaskStatus = async (taskId) => {
     const maxAttempts = 60;
     let attempts = 0;
-
     while (attempts < maxAttempts) {
       try {
         const response = await fetch(`https://api.meobypass.click/taskid/${taskId}`);
         const data = await response.json();
-
         if (data.status === "success") {
           setResult(data.result);
           setShowResult(true);
           setLoading(false);
-          
-          // Trigger confetti animation
           setShowConfetti(true);
           setTimeout(() => setShowConfetti(false), 3000);
-          
-          // Add to history and update stats
           const newHistoryItem = {
             original: url,
             bypassed: data.result,
@@ -168,15 +188,12 @@ export default function BypassPage() {
           };
           setBypassHistory(prev => [newHistoryItem, ...prev].slice(0, 10));
           setTotalBypasses(prev => prev + 1);
-          
-          // Achievement system
           const newStreak = successStreak + 1;
           setSuccessStreak(newStreak);
           if (newStreak === 5 || newStreak === 10 || newStreak === 25 || newStreak === 50) {
             setShowAchievement(true);
             setTimeout(() => setShowAchievement(false), 4000);
           }
-          
           return;
         } else if (data.status === "error") {
           setError(true);
@@ -185,14 +202,12 @@ export default function BypassPage() {
           setLoading(false);
           return;
         }
-
         await new Promise((resolve) => setTimeout(resolve, 1000));
         attempts++;
       } catch {
         attempts++;
       }
     }
-
     setError(true);
     setResult("Request timeout. Please try again.");
     setShowResult(true);
@@ -201,23 +216,18 @@ export default function BypassPage() {
 
   const handleBypass = async () => {
     if (!url || !isRecaptchaReady) return;
-
     setLoading(true);
     setError(false);
-
     try {
       const recaptchaToken = await getRecaptchaToken();
-      
       if (!recaptchaToken) {
         setError(true);
         setLoading(false);
         setTimeout(() => setError(false), 2000);
         return;
       }
-
       const bypassUrl = `https://api.meobypass.click/public/bypass?url=${encodeURIComponent(url)}&captcha=${recaptchaToken}`;
       const response = await fetch(bypassUrl);
-
       if (response.status === 200) {
         const data = await response.json();
         if (data.task_id) {
@@ -296,13 +306,10 @@ export default function BypassPage() {
   const addCustomMusic = () => {
     if (newMusicName && newMusicUrl) {
       let processedUrl = newMusicUrl;
-      
-      // Convert Spotify link to embed URL
       if (newMusicUrl.includes('spotify.com/track/')) {
         const trackId = newMusicUrl.split('track/')[1].split('?')[0];
         processedUrl = `https://open.spotify.com/embed/track/${trackId}`;
       }
-      
       setCustomPlaylist([...customPlaylist, { name: newMusicName, url: processedUrl }]);
       setNewMusicName("");
       setNewMusicUrl("");
@@ -334,70 +341,70 @@ export default function BypassPage() {
     <div className="min-h-screen bg-black text-white p-4 md:p-6 relative overflow-hidden">
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
-        
+       
         body {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
           background: #050505;
         }
-        
+       
         .title-glow {
-          text-shadow: 
+          text-shadow:
             0 0 30px rgba(34, 197, 94, 0.6),
             0 0 60px rgba(34, 197, 94, 0.4),
             0 0 90px rgba(34, 197, 94, 0.3);
         }
-        
+       
         .mono {
           font-family: 'JetBrains Mono', monospace;
         }
-        
+       
         @keyframes rotate {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
-        
+       
         .disk {
           animation: rotate 5s linear infinite;
           animation-play-state: paused;
         }
-        
+       
         .disk.playing {
           animation-play-state: running;
         }
-        
+       
         .grid-background {
-          background-image: 
+          background-image:
             linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
             linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
           background-size: 40px 40px;
         }
-        
+       
         @keyframes shimmer {
           0% { transform: translateX(-100%); }
           100% { transform: translateX(100%); }
         }
-        
+       
         .animate-shimmer {
           animation: shimmer 2s infinite;
         }
-        
+       
         .scrollbar-thin::-webkit-scrollbar {
           width: 4px;
         }
-        
+       
         .scrollbar-thin::-webkit-scrollbar-track {
           background: transparent;
         }
-        
+       
         .scrollbar-thin::-webkit-scrollbar-thumb {
           background: #22c55e;
           border-radius: 10px;
         }
-        
+       
         .scrollbar-thin::-webkit-scrollbar-thumb:hover {
           background: #16a34a;
         }
-        
+       
         @keyframes confetti-fall {
           0% {
             transform: translateY(-100vh) rotate(0deg);
@@ -408,7 +415,7 @@ export default function BypassPage() {
             opacity: 0;
           }
         }
-        
+       
         .confetti {
           position: fixed;
           width: 10px;
@@ -417,12 +424,12 @@ export default function BypassPage() {
           pointer-events: none;
           animation: confetti-fall 3s linear forwards;
         }
-        
+       
         @keyframes blink {
           0%, 100% { opacity: 1; }
           50% { opacity: 0; }
         }
-        
+       
         @keyframes slide-in-right {
           from {
             transform: translateX(400px);
@@ -433,7 +440,7 @@ export default function BypassPage() {
             opacity: 1;
           }
         }
-        
+       
         @keyframes slide-out-right {
           from {
             transform: translateX(0);
@@ -444,15 +451,15 @@ export default function BypassPage() {
             opacity: 0;
           }
         }
-        
+       
         .achievement-enter {
           animation: slide-in-right 0.5s ease-out forwards;
         }
-        
+       
         .achievement-exit {
           animation: slide-out-right 0.5s ease-in forwards;
         }
-        
+       
         @keyframes toast-slide-in {
           from {
             transform: translateX(400px);
@@ -463,13 +470,11 @@ export default function BypassPage() {
             opacity: 1;
           }
         }
-        
+       
         .toast-enter {
           animation: toast-slide-in 0.3s ease-out forwards;
         }
       `}</style>
-
-      {/* Toast Notifications */}
       <div className="fixed bottom-6 right-6 z-[10001] flex flex-col gap-2">
         {toasts.map((toast, index) => (
           <div
@@ -498,8 +503,6 @@ export default function BypassPage() {
           </div>
         ))}
       </div>
-
-      {/* Achievement Notification */}
       {showAchievement && (
         <div className="fixed top-6 right-6 z-[10000] achievement-enter">
           <div className="bg-gradient-to-r from-green-500 to-green-600 border-2 border-green-400 rounded-2xl p-4 shadow-2xl min-w-[280px]">
@@ -525,7 +528,6 @@ export default function BypassPage() {
           </div>
         </div>
       )}
-
       {showConfetti && (
         <>
           {Array.from({ length: 50 }).map((_, i) => (
@@ -546,14 +548,10 @@ export default function BypassPage() {
           ))}
         </>
       )}
-
       <div className="absolute inset-0 grid-background"></div>
       <div className="absolute top-20 left-20 w-64 h-64 bg-green-600/10 rounded-full blur-3xl"></div>
       <div className="absolute bottom-20 right-20 w-80 h-80 bg-green-500/10 rounded-full blur-3xl"></div>
-
       <audio ref={audioRef} loop />
-
-      {/* Music Player */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
         <div className="flex items-center bg-black/95 backdrop-blur-xl border border-zinc-800 rounded-2xl p-3 shadow-2xl">
           <div className={`w-12 h-12 rounded-xl bg-green-500 flex items-center justify-center disk ${isPlaying ? 'playing' : ''}`}>
@@ -584,7 +582,6 @@ export default function BypassPage() {
             </div>
           </div>
         </div>
-
         {showPlaylist && !showAddMusic && (
           <div className="absolute bottom-24 left-1/2 -translate-x-1/2 bg-black/95 backdrop-blur-xl border border-zinc-800 rounded-2xl p-4 w-80 shadow-2xl">
             <div className="flex items-center justify-between mb-4">
@@ -592,7 +589,7 @@ export default function BypassPage() {
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 <h3 className="text-[10px] font-black uppercase text-green-500 tracking-widest">Now Playing</h3>
               </div>
-              <button 
+              <button
                 onClick={() => {
                   setShowAddMusic(true);
                   setShowPlaylist(false);
@@ -618,8 +615,8 @@ export default function BypassPage() {
                   <div className="relative z-10 flex items-center justify-between">
                     <div onClick={() => selectSong(i)} className="flex items-center gap-3 flex-1">
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black transition ${
-                        i === currentSongIndex 
-                          ? 'bg-black/20 text-black' 
+                        i === currentSongIndex
+                          ? 'bg-black/20 text-black'
                           : 'bg-zinc-800 text-zinc-700 group-hover:text-green-500'
                       }`}>
                         {i === currentSongIndex ? (
@@ -659,7 +656,6 @@ export default function BypassPage() {
             </div>
           </div>
         )}
-
         {!showPlaylist && showAddMusic && (
           <div className="absolute bottom-24 left-1/2 -translate-x-1/2 bg-black/95 backdrop-blur-xl border border-zinc-800 rounded-2xl p-4 w-80 shadow-2xl">
             <h3 className="text-[10px] font-black uppercase text-green-500 tracking-widest mb-3">Add Music</h3>
@@ -701,7 +697,6 @@ export default function BypassPage() {
           </div>
         )}
       </div>
-
       <div className="max-w-3xl mx-auto pt-10 pb-24 relative z-10">
         <header className="mb-6 text-center">
           <h1 className="text-6xl md:text-8xl font-black uppercase tracking-tighter mb-4 title-glow">
@@ -724,12 +719,10 @@ export default function BypassPage() {
               <p className="text-[10px] font-bold text-white mono">READY</p>
             </div>
           </div>
-
           <div className="text-[7px] font-black uppercase tracking-widest text-green-500 mt-6 max-w-xl mx-auto bg-black/60 border border-zinc-900 rounded-2xl p-3 text-center">
             This service is completely <span className="text-white">free</span>. Anyone asking for payment is trying to <span className="text-white">scam</span> you.
           </div>
         </header>
-
         <div className="max-w-xl mx-auto relative">
           <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 via-green-500/10 to-green-500/20 blur-xl -z-10"></div>
           <div className="bg-black/80 border border-zinc-800 rounded-3xl p-3 mb-6 shadow-2xl relative overflow-hidden">
@@ -759,7 +752,6 @@ export default function BypassPage() {
             </button>
           </div>
         </div>
-
         {showResult && (
           <div className="max-w-xl mx-auto mb-12 p-5 border rounded-2xl transition relative overflow-hidden">
             {error ? (
@@ -768,7 +760,7 @@ export default function BypassPage() {
                 <div className="flex items-center justify-between gap-3 relative z-10">
                   <div className="flex items-center gap-3 flex-1">
                     <svg className="w-5 h-5 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
                     <p className="text-red-400 font-mono text-xs font-semibold">{result}</p>
                   </div>
@@ -819,7 +811,6 @@ export default function BypassPage() {
             )}
           </div>
         )}
-
         <div className="grid grid-cols-3 gap-2 max-w-xl mx-auto mb-3">
           <a href="/discord" className="relative bg-gradient-to-br from-green-500/10 via-green-500/5 to-transparent border border-green-500/30 text-white p-4 rounded-2xl text-[10px] font-black uppercase flex items-center justify-center gap-2 hover:border-green-500 hover:text-green-400 transition-all duration-500 overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-green-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
@@ -835,7 +826,7 @@ export default function BypassPage() {
             </svg>
             <span className="relative z-10">Add Bot</span>
           </a>
-          <button 
+          <button
             onClick={() => setShowHistory(!showHistory)}
             className="relative bg-gradient-to-br from-lime-500/10 via-lime-500/5 to-transparent border border-lime-500/30 text-white p-4 rounded-2xl text-[10px] font-black uppercase flex items-center justify-center gap-2 hover:border-lime-500 hover:text-lime-400 transition-all duration-500 overflow-hidden group"
           >
@@ -851,9 +842,8 @@ export default function BypassPage() {
             )}
           </button>
         </div>
-
         <div className="grid grid-cols-2 gap-2 max-w-md mx-auto mb-12">
-          <button 
+          <button
             onClick={() => setShowStats(!showStats)}
             className="relative bg-gradient-to-br from-teal-500/10 via-teal-500/5 to-transparent border border-teal-500/30 text-white p-4 rounded-2xl text-[10px] font-black uppercase flex items-center justify-center gap-2 hover:border-teal-500 hover:text-teal-400 transition-all duration-500 overflow-hidden group"
           >
@@ -871,7 +861,6 @@ export default function BypassPage() {
             <span className="relative z-10">User Script</span>
           </a>
         </div>
-
         {showStats && (
           <div className="max-w-xl mx-auto mb-12 bg-black/80 border border-zinc-800 rounded-3xl p-6">
             <div className="flex items-center justify-between mb-6">
@@ -881,8 +870,6 @@ export default function BypassPage() {
               </div>
               <span className="text-[7px] text-zinc-600 font-bold uppercase mono">{currentTime}</span>
             </div>
-            
-            {/* Main Stats Row */}
             <div className="grid grid-cols-3 gap-3 mb-4">
               <div className="relative bg-gradient-to-br from-green-500/10 via-green-500/5 to-transparent border border-green-500/30 rounded-xl p-4 text-left overflow-hidden group hover:border-green-500 transition-all duration-500">
                 <div className="absolute inset-0 bg-gradient-to-r from-green-500/0 via-green-500/5 to-green-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
@@ -890,14 +877,12 @@ export default function BypassPage() {
                 <p className="text-2xl font-black text-green-500 mb-0.5 relative z-10 transition-transform duration-500 group-hover:scale-105">{totalBypasses}</p>
                 <p className="text-[7px] text-green-500/60 font-bold uppercase relative z-10">Total Completed</p>
               </div>
-              
               <div className="relative bg-gradient-to-br from-yellow-500/10 via-yellow-500/5 to-transparent border border-yellow-500/30 rounded-xl p-4 text-left overflow-hidden group hover:border-yellow-500 transition-all duration-500">
                 <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/0 via-yellow-500/5 to-yellow-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
                 <p className="text-[7px] font-black uppercase text-yellow-500/80 tracking-wider mb-2 relative z-10">Streak</p>
                 <p className="text-2xl font-black text-yellow-500 mb-0.5 relative z-10 transition-transform duration-500 group-hover:scale-105">{successStreak}</p>
                 <p className="text-[7px] text-yellow-500/60 font-bold uppercase relative z-10">Success Run</p>
               </div>
-              
               <div className="relative bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent border border-blue-500/30 rounded-xl p-4 text-left overflow-hidden group hover:border-blue-500 transition-all duration-500">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/5 to-blue-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
                 <p className="text-[7px] font-black uppercase text-blue-500/80 tracking-wider mb-2 relative z-10">History</p>
@@ -905,8 +890,6 @@ export default function BypassPage() {
                 <p className="text-[7px] text-blue-500/60 font-bold uppercase relative z-10">Saved Links</p>
               </div>
             </div>
-
-            {/* Secondary Stats Row */}
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div className="relative bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent border border-emerald-500/30 rounded-xl p-4 overflow-hidden group hover:border-emerald-500 transition-all duration-500">
                 <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
@@ -917,7 +900,6 @@ export default function BypassPage() {
                 <p className={`text-xl font-black mono mb-1 relative z-10 transition-transform duration-500 group-hover:scale-105 ${ping === 'OFFLINE' ? 'text-white' : 'text-emerald-500'}`}>{ping}</p>
                 <p className="text-[7px] text-emerald-500/60 font-bold uppercase relative z-10">Response Time</p>
               </div>
-              
               <div className="relative bg-gradient-to-br from-purple-500/10 via-purple-500/5 to-transparent border border-purple-500/30 rounded-xl p-4 overflow-hidden group hover:border-purple-500 transition-all duration-500">
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-500/5 to-purple-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
                 <div className="flex items-center justify-between mb-3 relative z-10">
@@ -930,8 +912,6 @@ export default function BypassPage() {
                 <p className="text-[7px] text-purple-500/60 font-bold uppercase relative z-10">Active Providers</p>
               </div>
             </div>
-
-            {/* System Status */}
             <div className="relative bg-gradient-to-r from-green-500/10 via-transparent to-green-500/5 border border-green-500/30 rounded-xl p-3 flex items-center justify-between overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-green-500/5 to-transparent animate-shimmer"></div>
               <div className="flex items-center gap-2 relative z-10">
@@ -942,7 +922,6 @@ export default function BypassPage() {
             </div>
           </div>
         )}
-
         {showHistory && (
           <div className="max-w-xl mx-auto mb-12 bg-black/80 border border-zinc-800 rounded-3xl p-6 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-orange-500/5"></div>
@@ -960,11 +939,9 @@ export default function BypassPage() {
                 </button>
               )}
             </div>
-            
             <div id="history-copied" className="hidden mb-3 p-2 bg-green-500/10 border border-green-500 rounded-lg text-center">
               <p className="text-[8px] font-black uppercase text-green-500">✓ Copied to clipboard</p>
             </div>
-
             {bypassHistory.length === 0 ? (
               <div className="text-center py-8 relative z-10">
                 <svg className="w-12 h-12 text-zinc-800 mx-auto mb-3" fill="currentColor" viewBox="0 0 20 20">
@@ -1006,8 +983,7 @@ export default function BypassPage() {
             )}
           </div>
         )}
-
-                  <div className="bg-black/80 border border-zinc-800 rounded-3xl p-8 text-left mb-6 relative overflow-hidden">
+        <div className="bg-black/80 border border-zinc-800 rounded-3xl p-8 text-left mb-6 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 via-transparent to-green-500/5"></div>
           <div className="flex items-center gap-2 mb-8 text-[9px] font-black uppercase text-green-500 tracking-widest relative z-10">
             <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
@@ -1024,7 +1000,6 @@ export default function BypassPage() {
             ))}
           </div>
         </div>
-
         <div className="bg-black/80 border border-zinc-800 rounded-3xl p-8 text-left relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-emerald-500/5"></div>
           <div className="flex items-center gap-2 mb-8 text-[9px] font-black uppercase text-emerald-500 tracking-widest relative z-10">
@@ -1042,13 +1017,11 @@ export default function BypassPage() {
             ))}
           </div>
         </div>
-
         <div className="text-center mt-12 mono">
           <p className="mb-2 text-[9px] text-zinc-700 font-bold uppercase tracking-widest">
             Only <span className="text-green-500">MEOBYPASS.CLICK</span> and <span className="text-green-500">MEOBYPASS.COM</span> are the official domain of <span className="text-green-500">Mèo Bypass</span>.
           </p>
           <p className="text-[8px] text-zinc-800 mt-6 font-bold uppercase tracking-wider">© 2025 longndev. All rights reserved.</p>
-          
           <div className="mt-8 flex items-center justify-center gap-2">
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
@@ -1067,6 +1040,7 @@ export default function BypassPage() {
             <span className="text-[8px] text-zinc-700 font-bold uppercase mono">{ping}</span>
           </div>
         </div>
+        <div id="recaptcha-container"></div>
       </div>
     </div>
   );
